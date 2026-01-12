@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Flower Classification</title>
+
+    <style>
+        :root {
+            --primary: #6c63ff;
+            --primary-hover: #554ee2;
+            --success: #2e7d32;
+            --bg-gradient: linear-gradient(135deg, #667eea, #764ba2);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #2c2c2c;
+            --text-muted: #666;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Segoe UI", sans-serif;
+            background: var(--bg-gradient);
+        }
+
+        /* ================= Card ================= */
+        .card {
+            width: 440px;
+            padding: 35px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            text-align: center;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            color: var(--text-main);
+            font-size: 26px;
+        }
+
+        /* ================= Upload ================= */
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-box {
+            width: 100%;
+            padding: 30px;
+            border-radius: 14px;
+            border: 2px dashed var(--primary);
+            background: rgba(108, 99, 255, 0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-box:hover {
+            background: rgba(108, 99, 255, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .upload-icon {
+            font-size: 36px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            margin-top: 10px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .file-name {
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* ================= Preview ================= */
+        .preview-container {
+            margin-top: 20px;
+        }
+
+        .preview-image {
+            display: none;
+            max-width: 100%;
+            max-height: 240px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ================= Button ================= */
+        .btn {
+            margin-top: 25px;
+            padding: 12px 32px;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), #8f88ff);
+            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--primary-hover), #7b74ff);
+            transform: translateY(-2px);
+        }
+
+        /* ================= Result ================= */
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
+            box-shadow: inset 0 0 0 1px rgba(46,125,50,0.15);
+        }
+
+        .result h2 {
+            margin: 0;
+            color: var(--success);
+            font-size: 22px;
+        }
+
+        .confidence {
+            margin-top: 8px;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="card">
+    <h1>🌸 AI Flower Classification</h1>
+
+    <form class="upload-form" method="POST" enctype="multipart/form-data">
+        <input type="file" id="file-input" name="file" accept="image/*" required onchange="previewImage(event)">
+
+        <label for="file-input" class="upload-box">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">Upload flower image</div>
+            <div id="file-name" class="file-name">PNG, JPG, JPEG</div>
+        </label>
+
+        <div class="preview-container">
+            <img id="preview" class="preview-image">
+        </div>
+
+        <button type="submit" class="btn">🔍 Predict</button>
+    </form>
+
+    {% if prediction %}
+    <div class="result">
+        <h2>{{ prediction }}</h2>
+        <div class="confidence">
+            Confidence: {{ "%.2f"|format(confidence * 100) }}%
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function previewImage(event) {
+        const preview = document.getElementById("preview");
+        const fileName = document.getElementById("file-name");
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        fileName.textContent = file.name;
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
