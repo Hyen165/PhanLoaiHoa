@@ -5,4 +5,4 @@ keras
 opencv-python
 numpy
 pillow
-gunicorn web:app
+gunicorn
