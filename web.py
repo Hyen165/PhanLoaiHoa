@@ -12,8 +12,11 @@ from PIL import Image, ImageOps
 
 app = Flask(__name__)
 
+# Giới hạn upload ~5MB (an toàn cho webcam base64)
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
+
 # =========================
-# Load model & labels
+# Load YOUR model & labels
 # =========================
 model = tf.keras.models.load_model("keras_model.h5", compile=False)
 
@@ -22,24 +25,26 @@ with open("labels.txt", "r", encoding="utf-8") as f:
 
 
 # =========================
-# Predict function
+# Predict function (GIỮ NGUYÊN LOGIC)
 # =========================
 def predict_image(image: Image.Image):
-    # Resize & preprocess
     size = (224, 224)
-    image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+
+    image = ImageOps.fit(
+        image,
+        size,
+        Image.Resampling.LANCZOS
+    )
 
     image_array = np.asarray(image).astype(np.float32)
     normalized_image_array = (image_array / 127.5) - 1
 
     data = np.expand_dims(normalized_image_array, axis=0)
 
-    # Predict
-    predictions = model.predict(data)
+    predictions = model.predict(data, verbose=0)
     index = np.argmax(predictions)
     confidence_score = float(predictions[0][index])
 
-    # Clean label (Teachable Machine format: "0 Rose")
     class_name = class_names[index]
     if class_name[0].isdigit():
         class_name = class_name.split(" ", 1)[1]
@@ -57,22 +62,23 @@ def index():
 
     if request.method == "POST":
 
-        # -------- CASE 1: Upload file --------
+        # -------- Upload image --------
         if "file" in request.files and request.files["file"].filename != "":
-            file = request.files["file"]
             try:
-                image = Image.open(file).convert("RGB")
+                image = Image.open(request.files["file"]).convert("RGB")
                 prediction, confidence = predict_image(image)
             except Exception as e:
                 print("Upload error:", e)
 
-        # -------- CASE 2: Webcam base64 --------
-        elif "webcam_image" in request.form and request.form["webcam_image"] != "":
+        # -------- Webcam base64 --------
+        elif "webcam_image" in request.form and request.form["webcam_image"]:
             try:
                 data_url = request.form["webcam_image"]
-                header, encoded = data_url.split(",", 1)
+                _, encoded = data_url.split(",", 1)
+
                 image_bytes = base64.b64decode(encoded)
                 image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
                 prediction, confidence = predict_image(image)
             except Exception as e:
                 print("Webcam error:", e)
@@ -85,7 +91,7 @@ def index():
 
 
 # =========================
-# Run app
+# Run
 # =========================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)
