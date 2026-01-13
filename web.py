@@ -1,7 +1,4 @@
 import os
-import base64
-import io
-
 os.environ['TF_USE_LEGACY_KERAS'] = '1'
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
@@ -12,86 +9,45 @@ from PIL import Image, ImageOps
 
 app = Flask(__name__)
 
-# Giới hạn upload ~5MB (an toàn cho webcam base64)
-app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
-
-# =========================
-# Load YOUR model & labels
-# =========================
+# Load model
 model = tf.keras.models.load_model("keras_model.h5", compile=False)
+class_names = open("labels.txt", "r").readlines()
 
-with open("labels.txt", "r", encoding="utf-8") as f:
-    class_names = [line.strip() for line in f.readlines()]
-
-
-# =========================
-# Predict function (GIỮ NGUYÊN LOGIC)
-# =========================
+# Function to preprocess image and make prediction
 def predict_image(image: Image.Image):
+    # Create array
+    data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+    # Resize
     size = (224, 224)
-
-    image = ImageOps.fit(
-        image,
-        size,
-        Image.Resampling.LANCZOS
-    )
-
-    image_array = np.asarray(image).astype(np.float32)
-    normalized_image_array = (image_array / 127.5) - 1
-
-    data = np.expand_dims(normalized_image_array, axis=0)
-
-    predictions = model.predict(data, verbose=0)
-    index = np.argmax(predictions)
-    confidence_score = float(predictions[0][index])
-
-    class_name = class_names[index]
-    if class_name[0].isdigit():
-        class_name = class_name.split(" ", 1)[1]
-
+    image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+    image_array = np.asarray(image)
+    # Normalize
+    normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+    data[0] = normalized_image_array
+    # Predict
+    prediction = model.predict(data)
+    index = np.argmax(prediction)
+    class_name = class_names[index][2:].strip()
+    confidence_score = float(prediction[0][index])
+    # Return result
     return class_name, confidence_score
 
-
-# =========================
-# Flask route
-# =========================
+# Flask routes
 @app.route("/", methods=["GET", "POST"])
 def index():
     prediction = None
     confidence = None
-
     if request.method == "POST":
-
-        # -------- Upload image --------
-        if "file" in request.files and request.files["file"].filename != "":
-            try:
-                image = Image.open(request.files["file"]).convert("RGB")
-                prediction, confidence = predict_image(image)
-            except Exception as e:
-                print("Upload error:", e)
-
-        # -------- Webcam base64 --------
-        elif "webcam_image" in request.form and request.form["webcam_image"]:
-            try:
-                data_url = request.form["webcam_image"]
-                _, encoded = data_url.split(",", 1)
-
-                image_bytes = base64.b64decode(encoded)
-                image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-
-                prediction, confidence = predict_image(image)
-            except Exception as e:
-                print("Webcam error:", e)
-
+        file = request.files["file"]
+        image = Image.open(file).convert("RGB")
+        prediction, confidence = predict_image(image)
     return render_template(
         "index.html",
         prediction=prediction,
         confidence=confidence
     )
 
-
-# =========================
-# Run
-# =========================
+# Main entry point
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    # app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
