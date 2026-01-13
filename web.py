@@ -1,4 +1,7 @@
 import os
+import base64
+import io
+
 os.environ['TF_USE_LEGACY_KERAS'] = '1'
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
@@ -9,45 +12,80 @@ from PIL import Image, ImageOps
 
 app = Flask(__name__)
 
-# Load model
+# =========================
+# Load model & labels
+# =========================
 model = tf.keras.models.load_model("keras_model.h5", compile=False)
-class_names = open("labels.txt", "r").readlines()
 
-# Function to preprocess image and make prediction
+with open("labels.txt", "r", encoding="utf-8") as f:
+    class_names = [line.strip() for line in f.readlines()]
+
+
+# =========================
+# Predict function
+# =========================
 def predict_image(image: Image.Image):
-    # Create array
-    data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
-    # Resize
+    # Resize & preprocess
     size = (224, 224)
     image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
-    image_array = np.asarray(image)
-    # Normalize
-    normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
-    data[0] = normalized_image_array
+
+    image_array = np.asarray(image).astype(np.float32)
+    normalized_image_array = (image_array / 127.5) - 1
+
+    data = np.expand_dims(normalized_image_array, axis=0)
+
     # Predict
-    prediction = model.predict(data)
-    index = np.argmax(prediction)
-    class_name = class_names[index][2:].strip()
-    confidence_score = float(prediction[0][index])
-    # Return result
+    predictions = model.predict(data)
+    index = np.argmax(predictions)
+    confidence_score = float(predictions[0][index])
+
+    # Clean label (Teachable Machine format: "0 Rose")
+    class_name = class_names[index]
+    if class_name[0].isdigit():
+        class_name = class_name.split(" ", 1)[1]
+
     return class_name, confidence_score
 
-# Flask routes
+
+# =========================
+# Flask route
+# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
     prediction = None
     confidence = None
+
     if request.method == "POST":
-        file = request.files["file"]
-        image = Image.open(file).convert("RGB")
-        prediction, confidence = predict_image(image)
+
+        # -------- CASE 1: Upload file --------
+        if "file" in request.files and request.files["file"].filename != "":
+            file = request.files["file"]
+            try:
+                image = Image.open(file).convert("RGB")
+                prediction, confidence = predict_image(image)
+            except Exception as e:
+                print("Upload error:", e)
+
+        # -------- CASE 2: Webcam base64 --------
+        elif "webcam_image" in request.form and request.form["webcam_image"] != "":
+            try:
+                data_url = request.form["webcam_image"]
+                header, encoded = data_url.split(",", 1)
+                image_bytes = base64.b64decode(encoded)
+                image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+                prediction, confidence = predict_image(image)
+            except Exception as e:
+                print("Webcam error:", e)
+
     return render_template(
         "index.html",
         prediction=prediction,
         confidence=confidence
     )
 
-# Main entry point
+
+# =========================
+# Run app
+# =========================
 if __name__ == "__main__":
-    # app.run(debug=True)
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
