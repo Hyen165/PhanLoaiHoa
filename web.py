@@ -10,12 +10,22 @@ import numpy as np
 from flask import Flask, render_template, request, jsonify
 from PIL import Image, ImageOps
 
+# =========================
+# Flask app
+# =========================
 app = Flask(__name__)
 
+# =========================
+# Load model & labels
+# =========================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-model = tf.keras.models.load_model("keras_model.h5", compile=False)
+MODEL_PATH = os.path.join(BASE_DIR, "keras_model.h5")
+LABEL_PATH = os.path.join(BASE_DIR, "labels.txt")
 
-with open("labels.txt", "r", encoding="utf-8") as f:
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+
+with open(LABEL_PATH, "r", encoding="utf-8") as f:
     class_names = [line.strip() for line in f.readlines()]
 
 
@@ -23,7 +33,6 @@ with open("labels.txt", "r", encoding="utf-8") as f:
 # Predict function
 # =========================
 def predict_image(image: Image.Image):
-    # Resize & preprocess
     size = (224, 224)
     image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
 
@@ -32,81 +41,54 @@ def predict_image(image: Image.Image):
 
     data = np.expand_dims(normalized_image_array, axis=0)
 
-    # Predict
     predictions = model.predict(data)
-    index = np.argmax(predictions)
+    index = int(np.argmax(predictions))
     confidence_score = float(predictions[0][index])
 
-    # Clean label (Teachable Machine format: "0 Rose")
     class_name = class_names[index]
-    if class_name[0].isdigit():
+    if class_name and class_name[0].isdigit():
         class_name = class_name.split(" ", 1)[1]
 
     return class_name, confidence_score
 
 
 # =========================
-# Flask route
+# Page route
 # =========================
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
-    prediction = None
-    confidence = None
+    return render_template("index.html")
 
-    if request.method == "POST":
 
-        # -------- CASE 1: Upload file --------
-        if "file" in request.files and request.files["file"].filename != "":
-            file = request.files["file"]
-            try:
-                image = Image.open(file).convert("RGB")
-                prediction, confidence = predict_image(image)
-            except Exception as e:
-                print("Upload error:", e)
-
-        # -------- CASE 2: Webcam base64 --------
-        elif "webcam_image" in request.form and request.form["webcam_image"] != "":
-            try:
-                data_url = request.form["webcam_image"]
-                header, encoded = data_url.split(",", 1)
-                image_bytes = base64.b64decode(encoded)
-                image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                prediction, confidence = predict_image(image)
-            except Exception as e:
-                print("Webcam error:", e)
-
-    return render_template(
-        "index.html",
-        prediction=prediction,
-        confidence=confidence
-    )
-
+# =========================
+# API route (frontend gọi)
+# =========================
 @app.route("/predict", methods=["POST"])
 def predict_api():
     try:
         data = request.json.get("image")
+        if not data:
+            return jsonify(success=False, error="No image data")
 
-        # base64 → image
         header, encoded = data.split(",", 1)
         image_bytes = base64.b64decode(encoded)
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
 
         label, confidence = predict_image(image)
 
-        return jsonify({
-            "success": True,
-            "label": label,
-            "confidence": round(confidence * 100, 2)
-        })
+        return jsonify(
+            success=True,
+            label=label,
+            confidence=round(confidence * 100, 2)
+        )
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        })
+        return jsonify(success=False, error=str(e))
+
 
 # =========================
-# Run app
+# Render entry point
 # =========================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
