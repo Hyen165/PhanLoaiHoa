@@ -1,218 +1,754 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Flower Classification</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Phân Loại Hoa</title>
     <style>
         :root {
-            --primary: #6c63ff;
-            --primary-hover: #554ee2;
-            --success: #2e7d32;
-            --bg-gradient: linear-gradient(135deg, #667eea, #764ba2);
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --text-main: #2c2c2c;
-            --text-muted: #666;
-            --radius: 16px;
+            --primary: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --secondary: #6D4C41;
+            --background: #f9f9f9;
+            --surface: #ffffff;
+            --text-primary: #212121;
+            --text-secondary: #666666;
+            --border: #e0e0e0;
+            --success: #2E7D32;
+            --warning: #F9A825;
+            --error: #C62828;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 8px;
+            --transition: all 0.3s ease;
         }
 
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
         }
 
         body {
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 20px;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: "Segoe UI", sans-serif;
-            background: var(--bg-gradient);
         }
 
-        /* ================= Card ================= */
-        .card {
-            width: 440px;
-            padding: 35px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border-radius: var(--radius);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
             text-align: center;
-            animation: slideUp 0.6s ease;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
         }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 8px;
         }
 
-        h1 {
-            margin-bottom: 25px;
-            color: var(--text-main);
-            font-size: 26px;
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
         }
 
-        /* ================= Upload ================= */
-        .upload-form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .upload-box {
-            width: 100%;
+        .card {
+            background-color: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             padding: 30px;
-            border-radius: 14px;
-            border: 2px dashed var(--primary);
-            background: rgba(108, 99, 255, 0.08);
-            cursor: pointer;
-            transition: all 0.3s ease;
+            margin-bottom: 25px;
+            transition: var(--transition);
         }
 
-        .upload-box:hover {
-            background: rgba(108, 99, 255, 0.15);
-            transform: translateY(-3px);
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title i {
+            font-size: 1.5rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 25px;
+            gap: 5px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+
+        .tab:hover {
+            background-color: rgba(46, 125, 50, 0.05);
+            color: var(--primary);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background-color: rgba(46, 125, 50, 0.08);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Upload Section */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary-light);
+            background-color: rgba(46, 125, 50, 0.03);
+        }
+
+        .upload-area.drag-over {
+            border-color: var(--primary);
+            background-color: rgba(46, 125, 50, 0.05);
         }
 
         .upload-icon {
-            font-size: 36px;
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 15px;
         }
 
         .upload-text {
-            font-size: 16px;
-            margin-top: 10px;
-            font-weight: 500;
-            color: var(--text-main);
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 10px;
         }
 
-        .file-name {
-            margin-top: 6px;
-            font-size: 13px;
-            color: var(--text-muted);
+        .upload-hint {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .btn-upload {
+            display: inline-block;
+            padding: 10px 24px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-upload:hover {
+            background-color: var(--primary-dark);
         }
 
         #file-input {
             display: none;
         }
 
-        /* ================= Preview ================= */
-        .preview-container {
+        /* Webcam Section */
+        .webcam-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto 20px;
+        }
+
+        #webcam-preview {
+            width: 100%;
+            height: auto;
+            border-radius: var(--radius);
+            background-color: #000;
+            display: block;
+        }
+
+        .webcam-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
             margin-top: 20px;
         }
 
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+
+        .btn-danger {
+            background-color: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #B71C1C;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .preview-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            text-align: left;
+        }
+
         .preview-image {
-            display: none;
             max-width: 100%;
-            max-height: 240px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            animation: fadeIn 0.4s ease;
+            max-height: 300px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin: 0 auto 20px;
+            display: block;
+        }
+
+        /* Results Section */
+        .result-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-left: 4px solid var(--primary);
+            animation: fadeIn 0.5s ease;
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ================= Button ================= */
-        .btn {
-            margin-top: 25px;
-            padding: 12px 32px;
-            font-size: 16px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            color: white;
-            background: linear-gradient(135deg, var(--primary), #8f88ff);
-            box-shadow: 0 8px 20px rgba(108, 99, 255, 0.4);
-            transition: all 0.3s ease;
+        .result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .btn:hover {
-            background: linear-gradient(135deg, var(--primary-hover), #7b74ff);
-            transform: translateY(-2px);
-        }
-
-        /* ================= Result ================= */
-        .result {
-            margin-top: 30px;
-            padding: 20px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #e8f5e9, #f1f8e9);
-            box-shadow: inset 0 0 0 1px rgba(46,125,50,0.15);
-        }
-
-        .result h2 {
-            margin: 0;
-            color: var(--success);
-            font-size: 22px;
+        .prediction {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
         }
 
         .confidence {
-            margin-top: 8px;
-            font-size: 18px;
-            color: var(--text-muted);
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .confidence-bar {
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 5px;
+            transition: width 0.8s ease;
+        }
+
+        .result-details {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .webcam-controls {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-
 <body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-seedling"></i> Hệ Thống Phân Loại Hoa</h1>
+            <p>Tải lên hình ảnh hoặc sử dụng webcam để xác định loài hoa</p>
+        </header>
 
-<div class="card">
-    <h1>🌸 AI Flower Classification</h1>
-
-    <form class="upload-form" method="POST" enctype="multipart/form-data">
-        <input type="file" id="file-input" name="file" accept="image/*" required onchange="previewImage(event)">
-
-        <label for="file-input" class="upload-box">
-            <div class="upload-icon">📷</div>
-            <div class="upload-text">Upload flower image</div>
-            <div id="file-name" class="file-name">PNG, JPG, JPEG</div>
-        </label>
-
-        <div class="preview-container">
-            <img id="preview" class="preview-image">
-        </div>
-
-        <button type="submit" class="btn">🔍 Predict</button>
-    </form>
-
-    {% if prediction %}
-    <div class="result">
-        <h2>{{ prediction }}</h2>
-        <div class="confidence">
-            Confidence: {{ "%.2f"|format(confidence * 100) }}%
-        </div>
+        <main>
+            <!-- Card Phương Thức Nhập Liệu -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-camera"></i> Dữ Liệu Đầu Vào
+                </div>
+                
+                <!-- Tabs chuyển đổi giữa upload và webcam -->
+                <div class="tabs">
+                    <button class="tab active" data-target="upload-tab">Tải Ảnh Lên</button>
+                    <button class="tab" data-target="webcam-tab">Sử Dụng Webcam</button>
+                </div>
+                
+                <!-- Tab Tải Ảnh Lên -->
+                <div id="upload-tab" class="tab-content active">
+                    <div class="upload-area" id="upload-area">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">
+                            Kéo thả ảnh hoa vào đây hoặc nhấp để chọn
+                        </div>
+                        <div class="upload-hint">
+                            Hỗ trợ JPG, PNG, WebP tối đa 5MB
+                        </div>
+                        <button class="btn-upload" id="browse-btn">
+                            <i class="fas fa-folder-open"></i> Chọn Tệp
+                        </button>
+                        <input type="file" id="file-input" accept="image/*">
+                    </div>
+                    
+                    <div class="preview-section">
+                        <div class="preview-title">Xem Trước Ảnh</div>
+                        <img id="image-preview" class="preview-image hidden" alt="Xem trước ảnh">
+                    </div>
+                </div>
+                
+                <!-- Tab Webcam -->
+                <div id="webcam-tab" class="tab-content">
+                    <div class="webcam-container">
+                        <video id="webcam-preview" autoplay playsinline></video>
+                    </div>
+                    
+                    <div class="webcam-controls">
+                        <button id="start-webcam" class="btn btn-primary">
+                            <i class="fas fa-video"></i> Bật Webcam
+                        </button>
+                        <button id="capture-btn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-camera"></i> Chụp Ảnh
+                        </button>
+                        <button id="stop-webcam" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Tắt Webcam
+                        </button>
+                    </div>
+                    
+                    <div class="preview-section">
+                        <div class="preview-title">Ảnh Đã Chụp</div>
+                        <canvas id="webcam-canvas" class="hidden"></canvas>
+                        <img id="webcam-capture" class="preview-image hidden" alt="Ảnh đã chụp">
+                    </div>
+                </div>
+                
+                <!-- Nút Phân Loại -->
+                <div style="text-align: center; margin-top: 30px;">
+                    <button id="classify-btn" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem;" disabled>
+                        <i class="fas fa-search"></i> Phân Loại Hoa
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Card Kết Quả -->
+            <div id="results-card" class="card result-card hidden">
+                <div class="result-title">
+                    <i class="fas fa-chart-bar"></i> Kết Quả Phân Loại
+                </div>
+                
+                <div class="prediction" id="prediction-text">Hoa Hồng</div>
+                <div class="confidence" id="confidence-text">Độ chính xác: 85.6%</div>
+                
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidence-bar" style="width: 85.6%"></div>
+                </div>
+                
+                <div class="result-details">
+                    <div>Thời gian phân loại: <span id="classification-time">1.24 giây</span></div>
+                    <div>Mô hình: FlowerNet v2.1</div>
+                </div>
+            </div>
+            
+            <!-- Card Hướng Dẫn -->
+            <div class="card">
+                <div class="card-title">
+                    <i class="fas fa-info-circle"></i> Hướng Dẫn Sử Dụng
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 10px; font-size: 1.1rem;">
+                            <i class="fas fa-upload"></i> Tải Ảnh Lên
+                        </h3>
+                        <p style="color: var(--text-secondary);">Nhấp vào khu vực tải lên hoặc kéo thả ảnh hoa vào. Đảm bảo hoa hiển thị rõ để có kết quả tốt nhất.</p>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 10px; font-size: 1.1rem;">
+                            <i class="fas fa-camera"></i> Sử Dụng Webcam
+                        </h3>
+                        <p style="color: var(--text-secondary);">Chuyển sang tab webcam, cho phép truy cập camera và chụp ảnh trực tiếp của hoa để phân loại.</p>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--primary); margin-bottom: 10px; font-size: 1.1rem;">
+                            <i class="fas fa-search"></i> Nhận Kết Quả
+                        </h3>
+                        <p style="color: var(--text-secondary);">Nhấp "Phân Loại Hoa" để phân tích ảnh. Kết quả sẽ hiển thị loại hoa và mức độ chính xác.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p> Nhóm 17 | Môn học: Trí tuệ nhân tạo</p>
+        </footer>
     </div>
-    {% endif %}
-</div>
 
-<script>
-    function previewImage(event) {
-        const preview = document.getElementById("preview");
-        const fileName = document.getElementById("file-name");
-        const file = event.target.files[0];
+    <script>
+        // Phần tử DOM
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const browseBtn = document.getElementById('browse-btn');
+        const imagePreview = document.getElementById('image-preview');
+        const webcamPreview = document.getElementById('webcam-preview');
+        const webcamCanvas = document.getElementById('webcam-canvas');
+        const webcamCapture = document.getElementById('webcam-capture');
+        const startWebcamBtn = document.getElementById('start-webcam');
+        const captureBtn = document.getElementById('capture-btn');
+        const stopWebcamBtn = document.getElementById('stop-webcam');
+        const classifyBtn = document.getElementById('classify-btn');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const resultsCard = document.getElementById('results-card');
+        const predictionText = document.getElementById('prediction-text');
+        const confidenceText = document.getElementById('confidence-text');
+        const confidenceBar = document.getElementById('confidence-bar');
+        const classificationTime = document.getElementById('classification-time');
+        
+        // Biến trạng thái
+        let currentImage = null;
+        let stream = null;
+        let capturedImage = null;
+        let currentTab = 'upload';
+        
+        // Chuyển đổi tab
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-target');
+                
+                // Cập nhật tab
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Cập nhật nội dung tab
+                tabContents.forEach(content => {
+                    content.classList.remove('active');
+                    if (content.id === target) {
+                        content.classList.add('active');
+                    }
+                });
+                
+                currentTab = target === 'upload-tab' ? 'upload' : 'webcam';
+                updateClassifyButton();
+            });
+        });
+        
+        // Tương tác với khu vực tải lên
+        browseBtn.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            handleImageUpload(e.target.files[0]);
+        });
+        
+        // Chức năng kéo thả
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length) {
+                handleImageUpload(e.dataTransfer.files[0]);
+            }
+        });
+        
+        // Chức năng webcam
+        startWebcamBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'environment' // Ưu tiên camera sau trên điện thoại
+                    } 
+                });
+                
+                webcamPreview.srcObject = stream;
+                startWebcamBtn.disabled = true;
+                captureBtn.disabled = false;
+                stopWebcamBtn.disabled = false;
+                
+                // Hiển thị xem trước
+                webcamPreview.classList.remove('hidden');
+            } catch (err) {
+                alert('Không thể truy cập webcam. Vui lòng kiểm tra quyền truy cập.');
+                console.error('Lỗi webcam:', err);
+            }
+        });
+        
+        captureBtn.addEventListener('click', () => {
+            // Đặt kích thước canvas khớp với video
+            webcamCanvas.width = webcamPreview.videoWidth;
+            webcamCanvas.height = webcamPreview.videoHeight;
+            
+            // Vẽ khung hình video hiện tại lên canvas
+            const ctx = webcamCanvas.getContext('2d');
+            ctx.drawImage(webcamPreview, 0, 0, webcamCanvas.width, webcamCanvas.height);
+            
+            // Chuyển canvas thành URL dữ liệu và hiển thị
+            capturedImage = webcamCanvas.toDataURL('image/jpeg');
+            webcamCapture.src = capturedImage;
+            webcamCapture.classList.remove('hidden');
+            
+            // Đặt làm ảnh hiện tại để phân loại
+            currentImage = capturedImage;
+            updateClassifyButton();
+        });
+        
+        stopWebcamBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            webcamPreview.srcObject = null;
+            startWebcamBtn.disabled = false;
+            captureBtn.disabled = true;
+            stopWebcamBtn.disabled = true;
+            
+            // Ẩn xem trước
+            webcamPreview.classList.add('hidden');
+            webcamCapture.classList.add('hidden');
+            
+            // Xóa ảnh hiện tại nếu từ webcam
+            if (currentTab === 'webcam') {
+                currentImage = null;
+                updateClassifyButton();
+            }
+        });
+        
+        // Xử lý tải ảnh lên
+        function handleImageUpload(file) {
+            if (!file.type.match('image.*')) {
+                alert('Vui lòng chọn tệp hình ảnh.');
+                return;
+            }
+            
+            // Kiểm tra kích thước tệp (tối đa 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Kích thước tệp vượt quá giới hạn 5MB.');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+                currentImage = e.target.result;
+                updateClassifyButton();
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Cập nhật trạng thái nút phân loại
+        function updateClassifyButton() {
+            if (currentTab === 'upload') {
+                classifyBtn.disabled = !currentImage;
+            } else if (currentTab === 'webcam') {
+                classifyBtn.disabled = !capturedImage;
+            }
+        }
+        
+        // Xử lý nhấp nút phân loại
+        classifyBtn.addEventListener('click', async () => {
+            if (!currentImage && !capturedImage) return;
+            
+            // Hiển thị trạng thái đang tải
+            classifyBtn.innerHTML = '<div class="loading"></div> Đang phân tích...';
+            classifyBtn.disabled = true;
+            
+classifyBtn.addEventListener('click', async () => {
+    if (!currentImage) return;
 
-        if (!file) return;
+    classifyBtn.innerHTML = '<div class="loading"></div> Đang phân tích...';
+    classifyBtn.disabled = true;
 
-        fileName.textContent = file.name;
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = "block";
+    const startTime = performance.now();
+
+    try {
+        const response = await fetch("/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                image: currentImage
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error);
+        }
+
+        const endTime = performance.now();
+        const timeUsed = ((endTime - startTime) / 1000).toFixed(2);
+
+        predictionText.textContent = result.label;
+        confidenceText.textContent = `Độ chính xác: ${result.confidence}%`;
+        confidenceBar.style.width = `${result.confidence}%`;
+        classificationTime.textContent = `${timeUsed} giây`;
+
+        resultsCard.classList.remove('hidden');
+        resultsCard.scrollIntoView({ behavior: 'smooth' });
+
+    } catch (err) {
+        alert("Lỗi phân loại: " + err.message);
+        console.error(err);
     }
-</script>
 
+    classifyBtn.innerHTML = '<i class="fas fa-search"></i> Phân Loại Hoa';
+    classifyBtn.disabled = false;
+   });
+            
+         });
+        // Khởi tạo
+        updateClassifyButton();
+    </script>
 </body>
 </html>
