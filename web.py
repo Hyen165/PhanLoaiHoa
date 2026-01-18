@@ -2,7 +2,7 @@ import os
 import base64
 import io
 
-os.environ['TF_USE_LEGACY_KERAS'] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 import tensorflow as tf
