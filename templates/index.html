@@ -655,6 +655,7 @@
             // Xóa ảnh hiện tại nếu từ webcam
             if (currentTab === 'webcam') {
                 currentImage = null;
+                capturedImage = null;
                 updateClassifyButton();
             }
         });
@@ -695,58 +696,73 @@
         
         // Xử lý nhấp nút phân loại
         classifyBtn.addEventListener('click', async () => {
-            if (!currentImage && !capturedImage) return;
+            console.log("🚀 Bắt đầu phân loại...");
+            
+            // Kiểm tra xem có ảnh không
+            const imageToClassify = currentTab === 'webcam' ? capturedImage : currentImage;
+            
+            if (!imageToClassify) {
+                alert('Vui lòng chọn ảnh hoặc chụp ảnh trước!');
+                return;
+            }
             
             // Hiển thị trạng thái đang tải
             classifyBtn.innerHTML = '<div class="loading"></div> Đang phân tích...';
             classifyBtn.disabled = true;
             
-classifyBtn.addEventListener('click', async () => {
-    if (!currentImage) return;
-
-    classifyBtn.innerHTML = '<div class="loading"></div> Đang phân tích...';
-    classifyBtn.disabled = true;
-
-    const startTime = performance.now();
-
-    try {
-        const response = await fetch("/predict", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                image: currentImage
-            })
-        });
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error);
-        }
-
-        const endTime = performance.now();
-        const timeUsed = ((endTime - startTime) / 1000).toFixed(2);
-
-        predictionText.textContent = result.label;
-        confidenceText.textContent = `Độ chính xác: ${result.confidence}%`;
-        confidenceBar.style.width = `${result.confidence}%`;
-        classificationTime.textContent = `${timeUsed} giây`;
-
-        resultsCard.classList.remove('hidden');
-        resultsCard.scrollIntoView({ behavior: 'smooth' });
-
-    } catch (err) {
-        alert("Lỗi phân loại: " + err.message);
-        console.error(err);
-    }
-
-    classifyBtn.innerHTML = '<i class="fas fa-search"></i> Phân Loại Hoa';
-    classifyBtn.disabled = false;
-   });
+            const startTime = performance.now();
             
-         });
+            try {
+                console.log("📤 Gửi request đến server...");
+                
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        image: imageToClassify
+                    })
+                });
+                
+                console.log("📥 Nhận response:", response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log("✅ Kết quả:", result);
+                
+                if (!result.success) {
+                    throw new Error(result.error || "Lỗi không xác định");
+                }
+                
+                const endTime = performance.now();
+                const timeUsed = ((endTime - startTime) / 1000).toFixed(2);
+                
+                // Hiển thị kết quả
+                predictionText.textContent = result.label;
+                confidenceText.textContent = `Độ chính xác: ${result.confidence}%`;
+                confidenceBar.style.width = `${result.confidence}%`;
+                classificationTime.textContent = `${timeUsed} giây`;
+                
+                // Hiển thị card kết quả
+                resultsCard.classList.remove('hidden');
+                resultsCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                
+                console.log("🎉 Hoàn thành phân loại!");
+                
+            } catch (err) {
+                console.error("❌ Lỗi:", err);
+                alert("Lỗi phân loại: " + err.message);
+            } finally {
+                // Khôi phục nút
+                classifyBtn.innerHTML = '<i class="fas fa-search"></i> Phân Loại Hoa';
+                classifyBtn.disabled = false;
+            }
+        });
+        
         // Khởi tạo
         updateClassifyButton();
     </script>
